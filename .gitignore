@@ -25,3 +25,6 @@ reports/
 
 # Local backup files
 src/scanner_v01.py
+
+reports/*.json
+reports/*.csv

@@ -5,6 +5,7 @@ from scapy.all import ARP, Ether, srp
 
 from network import get_local_ip, get_network
 from ports import scan_ports
+from report import save_json, save_csv
 
 
 mac_lookup = MacLookup()
@@ -140,7 +141,7 @@ def display_port_results(target, results, elapsed):
 def main():
     print("=" * 65)
     print("                 ARAFAT NETWORK SCANNER")
-    print("                         VERSION 0.5")
+    print("                         VERSION 0.6")
     print("=" * 65)
 
     try:
@@ -157,6 +158,13 @@ def main():
         discovery_time = time.perf_counter() - start_time
 
         display_devices(devices)
+
+        # Save discovered devices to reports
+        json_report = save_json(network, devices)
+        csv_report = save_csv(devices)
+
+        print(f"\n[+] JSON report: {json_report}")
+        print(f"[+] CSV report : {csv_report}")
 
         print(
             f"\n[+] Discovery completed "
