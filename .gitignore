@@ -22,3 +22,6 @@ Thumbs.db
 # Generated reports
 reports/
 *.log
+
+# Local backup files
+src/scanner_v01.py
