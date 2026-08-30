@@ -1,20 +1,42 @@
+import ipaddress
+import socket
+
 from scapy.all import ARP, Ether, srp
 
 
+def get_local_ip():
+    """Get the local IP address of the active network connection."""
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+    try:
+        # No actual connection is made.
+        sock.connect(("8.8.8.8", 80))
+        local_ip = sock.getsockname()[0]
+    finally:
+        sock.close()
+
+    return local_ip
+
+
+def get_network(local_ip, prefix_length=24):
+    """Calculate the network CIDR from the local IP."""
+    interface = ipaddress.ip_interface(
+        f"{local_ip}/{prefix_length}"
+    )
+
+    return interface.network
+
+
 def scan_network(network):
+    """Discover active devices using ARP."""
     print(f"\n[+] Scanning network: {network}")
     print("[+] Please wait...\n")
 
-    # Create ARP request
-    arp_request = ARP(pdst=network)
-
-    # Create Ethernet broadcast frame
+    arp_request = ARP(pdst=str(network))
     broadcast = Ether(dst="ff:ff:ff:ff:ff:ff")
 
-    # Combine Ethernet and ARP packets
     packet = broadcast / arp_request
 
-    # Send packet and receive responses
     answered, _ = srp(
         packet,
         timeout=3,
@@ -33,36 +55,44 @@ def scan_network(network):
 
 
 def display_devices(devices):
-    print("=" * 60)
-    print("              NETWORK DEVICE SCANNER")
-    print("=" * 60)
+    """Display discovered devices."""
+    print("=" * 65)
+    print("                 NETWORK DEVICE SCANNER")
+    print("=" * 65)
 
-    print(f"{'IP Address':<20}{'MAC Address':<25}")
-    print("-" * 60)
+    print(f"{'IP Address':<20}{'MAC Address':<25}{'Status':<10}")
+    print("-" * 65)
 
     for device in devices:
         print(
             f"{device['ip']:<20}"
             f"{device['mac']:<25}"
+            f"{'UP':<10}"
         )
 
-    print("-" * 60)
+    print("-" * 65)
     print(f"Devices Found: {len(devices)}")
-    print("=" * 60)
+    print("=" * 65)
 
 
 def main():
-    print("=" * 60)
-    print("             ARAFAT NETWORK SCANNER")
-    print("=" * 60)
+    print("=" * 65)
+    print("                 ARAFAT NETWORK SCANNER")
+    print("=" * 65)
 
-    network = input(
-        "\nEnter network range (example: 192.168.1.0/24): "
-    )
+    try:
+        local_ip = get_local_ip()
+        network = get_network(local_ip)
 
-    devices = scan_network(network)
+        print(f"\n[+] Local IP : {local_ip}")
+        print(f"[+] Network  : {network}")
 
-    display_devices(devices)
+        devices = scan_network(network)
+
+        display_devices(devices)
+
+    except Exception as error:
+        print(f"\n[!] Error: {error}")
 
 
 if __name__ == "__main__":
